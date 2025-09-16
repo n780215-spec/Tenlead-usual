@@ -15,6 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
+/* --- 原有 CSS 不變 --- */
 body { font-family: "Microsoft JhengHei", sans-serif; padding: 8px; background: #f9f9f9; font-size: 13px; }
 h2,h3 { color: #333; font-size: 16px; margin: 8px 0; }
 .table-container { margin-bottom: 8px; }
@@ -56,7 +57,7 @@ ul { padding-left: 18px; margin: 4px 0; }
 </head>
 <body>
 
-<h2>天麗2025周年慶訂單計算</h2>
+<h2>天麗訂單計算</h2>
 
 <div class="table-container">
   <table>
@@ -90,6 +91,7 @@ ul { padding-left: 18px; margin: 4px 0; }
 <div id="floatingSummary">總價: 0 元<br>總PV: 0</div>
 
 <script>
+// 商品資料
 const products = [
   { code:"A1",name:"A1深層潔膚油",price:1995,pv:1700 },
   { code:"1",name:"1號 雙效潔顏露",price:1995,pv:1700 },
@@ -121,56 +123,62 @@ let selectedLevel="會員";
 let selectedMembership="新會員";
 const membershipFee={ "新會員":1000,"續約會員":500,"不需繳納續約費":0 };
 
-// 會員等級按鈕
-const memberButtons=document.getElementById("memberButtons");
-Object.keys(memberBonusRate).forEach(level=>{
-  const btn=document.createElement("button");
-  btn.textContent=level;
-  btn.onclick=()=>{
-    selectedLevel=level;
-    document.querySelectorAll(".level-buttons button").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    updateSummary();
-  };
-  if(level==="會員") btn.classList.add("active");
-  memberButtons.appendChild(btn);
-});
+// 產生按鈕
+function createButtons(){
+  const memberButtons=document.getElementById("memberButtons");
+  Object.keys(memberBonusRate).forEach(level=>{
+    const btn=document.createElement("button");
+    btn.textContent=level;
+    btn.onclick=()=>{
+      selectedLevel=level;
+      setActiveClass("level-buttons",btn);
+      updateSummary();
+    };
+    if(level==="會員") btn.classList.add("active");
+    memberButtons.appendChild(btn);
+  });
 
-// 會員資格按鈕
-const membershipButtons=document.getElementById("membershipButtons");
-Object.keys(membershipFee).forEach(type=>{
-  const displayText=type==="不需繳納續約費"? "不需繳納續約費 $0" : `${type} $${membershipFee[type]}`;
-  const btn=document.createElement("button");
-  btn.textContent=displayText;
-  btn.onclick=()=>{
-    selectedMembership=type;
-    document.querySelectorAll(".membership-buttons button").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    updateSummary();
-  };
-  if(type==="新會員") btn.classList.add("active");
-  membershipButtons.appendChild(btn);
-});
+  const membershipButtons=document.getElementById("membershipButtons");
+  Object.keys(membershipFee).forEach(type=>{
+    const displayText=type==="不需繳納續約費"? "不需繳納續約費 $0" : `${type} $${membershipFee[type]}`;
+    const btn=document.createElement("button");
+    btn.textContent=displayText;
+    btn.onclick=()=>{
+      selectedMembership=type;
+      setActiveClass("membership-buttons",btn);
+      updateSummary();
+    };
+    if(type==="新會員") btn.classList.add("active");
+    membershipButtons.appendChild(btn);
+  });
+}
 
-// 商品表格
-const tableBody=document.getElementById("productTable");
-products.forEach((p,index)=>{
-  const row=document.createElement("tr");
-  row.innerHTML=`
-    <td>${p.name}</td>
-    <td>${p.price}</td>
-    <td>${p.pv}</td>
-    <td>
-      <div class="quantity-control">
-        <button onclick="changeQty(${index},-1)">-</button>
-        <span id="qty${index}">0</span>
-        <button onclick="changeQty(${index},1)">+</button>
-      </div>
-    </td>`;
-  tableBody.appendChild(row);
-});
+// 設定 active 樣式
+function setActiveClass(containerClass,activeBtn){
+  document.querySelectorAll(`.${containerClass} button`).forEach(b=>b.classList.remove("active"));
+  activeBtn.classList.add("active");
+}
 
-// 改變數量
+// 生成商品表格
+function createProductTable(){
+  const tableBody=document.getElementById("productTable");
+  products.forEach((p,index)=>{
+    const row=document.createElement("tr");
+    row.innerHTML=`
+      <td>${p.name}</td>
+      <td>${p.price}</td>
+      <td>${p.pv}</td>
+      <td>
+        <div class="quantity-control">
+          <button onclick="changeQty(${index},-1)">-</button>
+          <span id="qty${index}">0</span>
+          <button onclick="changeQty(${index},1)">+</button>
+        </div>
+      </td>`;
+    tableBody.appendChild(row);
+  });
+}
+
 function changeQty(index,delta){
   const qtyEl=document.getElementById(`qty${index}`);
   let value=parseInt(qtyEl.textContent)||0;
@@ -179,7 +187,6 @@ function changeQty(index,delta){
   updateSummary();
 }
 
-// 更新清單 + 浮動區塊
 function updateSummary(){
   let productTotal=0,totalPV=0,listHTML="";
   products.forEach((p,index)=>{
@@ -212,12 +219,10 @@ function updateSummary(){
 
   document.getElementById("resultBox").innerHTML=result;
 
-  // 👉 更新浮動區塊
   document.getElementById("floatingSummary").innerHTML=
-    `總價: ${productTotal} 元<br>總PV: ${totalPV}`;
+    `總價: ${totalMoney} 元<br>總PV: ${totalPV}`;
 }
 
-// 重新整理
 function resetForm(){
   products.forEach((p,index)=>document.getElementById(`qty${index}`).textContent=0);
   selectedLevel="會員";
@@ -228,7 +233,6 @@ function resetForm(){
   updateSummary();
 }
 
-// 下載清單圖片
 function downloadAsImage(){
   const element=document.getElementById("resultBox");
   html2canvas(element,{backgroundColor:"#ffffff",scale:2}).then(canvas=>{
@@ -239,12 +243,19 @@ function downloadAsImage(){
     link.click();
   });
 }
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js")
-      .then(() => console.log("Service Worker 已註冊"))
-      .catch(err => console.error("Service Worker 註冊失敗", err));
-  }
+
+// 初始化
+createButtons();
+createProductTable();
+updateSummary();
+
+// 註冊 Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("Service Worker 已註冊"))
+    .catch(err => console.error("Service Worker 註冊失敗", err));
+}
+
 </script>
 </body>
 </html>
