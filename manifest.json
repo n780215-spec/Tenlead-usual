@@ -1,10 +1,12 @@
 {
-  "name": "會員商品清單計算器",
-  "short_name": "清單計算器",
+  "name": "天麗清單",
+  "short_name": "天麗清單",
+  "description": "天麗產品訂單計算器，支援會員資格、會員等級、下載清單圖片。",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "images/icon-192.png",
